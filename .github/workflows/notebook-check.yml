@@ -1,0 +1,51 @@
+name: Check Notebook Validity
+
+on:
+  push:
+    paths:
+      - '**.ipynb'
+  pull_request:
+    paths:
+      - '**.ipynb'
+
+jobs:
+  validate-notebooks:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: '3.8'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install nbformat
+    
+    - name: Validate Notebooks
+      run: |
+        python -c "
+        import json
+        import os
+        import glob
+        
+        notebooks = glob.glob('**/*.ipynb', recursive=True)
+        invalid = []
+        
+        for nb in notebooks:
+            try:
+                with open(nb, 'r') as f:
+                    json.load(f)
+                print(f'✅ {nb} - VÁLIDO')
+            except Exception as e:
+                print(f'❌ {nb} - INVÁLIDO: {e}')
+                invalid.append(nb)
+        
+        if invalid:
+            print(f'🚨 {len(invalid)} notebooks inválidos encontrados!')
+            exit(1)
+        else:
+            print('🎉 Todos os notebooks são válidos!')
+        "
